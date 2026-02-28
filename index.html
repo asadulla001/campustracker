@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santhiram Engineering College | Campus Tracker</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --border: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f1f5f9;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 95%;
+            max-width: 800px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin: 40px 10px;
+        }
+
+        /* Logic for Page Switching */
+        .page { display: none; }
+        .active { display: block; animation: fadeIn 0.4s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Welcome Page Styles */
+        .welcome-screen { text-align: center; padding: 50px 0; }
+        .welcome-screen h1 { color: var(--dark); font-size: 2.4rem; margin-bottom: 5px; }
+        .welcome-screen p { color: #64748b; font-size: 1.1rem; }
+        .logo-placeholder { font-size: 80px; margin-bottom: 20px; }
+
+        /* Form Controls */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { font-size: 0.9rem; font-weight: 600; color: var(--dark); display: block; margin-bottom: 5px; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 15px; box-sizing: border-box;
+        }
+
+        button {
+            background: var(--primary); color: white; padding: 14px;
+            border: none; border-radius: 10px; cursor: pointer;
+            width: 100%; font-weight: bold; font-size: 16px; transition: 0.3s;
+        }
+        button:hover { filter: brightness(1.0); transform: translateY(-1px); }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 25px 0;
+        }
+        .stat-card {
+            background: var(--light); padding: 20px; border-radius: 15px;
+            text-align: center; border-bottom: 5px solid var(--primary);
+        }
+        .stat-card.lost { border-bottom-color: var(--danger); }
+        .stat-card.found { border-bottom-color: var(--success); }
+        .stat-card h4 { margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase; }
+        .stat-card p { margin: 10px 0 0; font-size: 28px; font-weight: 800; color: var(--dark); }
+
+        /* Item Entries */
+        .item-list { margin-top: 30px; }
+        .item-card {
+            display: flex; align-items: center; justify-content: space-between;
+            background: white; border: 1px solid #edf2f7; padding: 15px;
+            border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .item-meta { display: flex; align-items: center; gap: 15px; }
+        .item-thumbnail { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; background: #e2e8f0; }
+        .status-badge { font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: 800; }
+        .bg-lost { background: #fee2e2; color: #b91c1c; }
+        .bg-found { background: #dcfce7; color: #15803d; }
+        
+        .btn-delete { background: none; color: #94a3b8; font-size: 12px; border: none; width: auto; padding: 0; margin-top: 5px; cursor: pointer;}
+        .btn-delete:hover { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <div id="pageWelcome" class="page active">
+            <div class="welcome-screen">
+                <div class="logo-placeholder">🏛️</div>
+                <h1>Santhiram Engineering College</h1>
+                <p>Digital Lost & Found Tracker</p>
+                <div style="margin-top: 40px;">
+                    <button onclick="changePage('pageRegister')">Get Started →</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="pageRegister" class="page">
+            <h2 style="text-align: center;">Join the Portal</h2>
+            <p style="text-align: center; color: #64748b;">Enter your details to access the tracker</p>
+            
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="regName" placeholder="e.g. Rahul Sharma">
+            </div>
+            <div class="input-group">
+                <label>College Roll No.</label>
+                <input type="text" id="regID" placeholder="e.g. 21X01A0XXX">
+            </div>
+            <button onclick="handleRegister()">Enter Dashboard</button>
+        </div>
+
+        <div id="pageDashboard" class="page">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="welcomeUser">Welcome, Student!</h2>
+                <button onclick="handleLogout()" style="width: auto; background: #94a3b8; font-size: 12px; padding: 8px 15px;">Logout</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card"><h4>Total</h4><p id="totalCount">0</p></div>
+                <div class="stat-card lost"><h4>Lost</h4><p id="lostCount">0</p></div>
+                <div class="stat-card found"><h4>Found</h4><p id="foundCount">0</p></div>
+            </div>
+
+            <div style="background: var(--light); padding: 25px; border-radius: 15px;">
+                <h3 style="margin-top: 0;">Post a New Report</h3>
+                <div class="input-group">
+                    <label>Report Type</label>
+                    <select id="repType">
+                        <option value="Lost">I Lost Something</option>
+                        <option value="Found">I Found Something</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Item Name</label>
+                    <input type="text" id="repName" placeholder="What did you lose/find?">
+                </div>
+                <div class="input-group">
+                    <label>Location</label>
+                    <input type="text" id="repLoc" placeholder="e.g. Main Library, Floor 2">
+                </div>
+                <div class="input-group">
+                    <label>Add a Photo</label>
+                    <input type="file" id="repImg" accept="image/*">
+                </div>
+                <button onclick="handleReportSubmit()" style="background: var(--dark);">Submit Report</button>
+            </div>
+
+            <div class="item-list">
+                <h3>Recent Activity</h3>
+                <div id="listContainer">
+                    <p style="text-align: center; color: #94a3b8;">No reports recorded yet.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Database simulation using LocalStorage
+        let dbReports = JSON.parse(localStorage.getItem('sec_reports')) || [];
+
+        function changePage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if(pageId === 'pageDashboard') renderDashboard();
+        }
+
+        function handleRegister() {
+            const name = document.getElementById('regName').value;
+            if(!name) return alert("Please enter your name");
+            localStorage.setItem('sec_user', name);
+            document.getElementById('welcomeUser').innerText = "Hi, " + name + "!";
+            changePage('pageDashboard');
+        }
+
+        function handleReportSubmit() {
+            const type = document.getElementById('repType').value;
+            const name = document.getElementById('repName').value;
+            const loc = document.getElementById('repLoc').value;
+            const imgInput = document.getElementById('repImg');
+
+            if(!name || !loc) return alert("Item name and Location are required!");
+
+            const saveAction = (imgBase64 = null) => {
+                const newReport = {
+                    id: Date.now(),
+                    type, name, loc,
+                    image: imgBase64,
+                    date: new Date().toLocaleDateString()
+                };
+                dbReports.unshift(newReport);
+                localStorage.setItem('sec_reports', JSON.stringify(dbReports));
+                
+                // Clear Form
+                document.getElementById('repName').value = '';
+                document.getElementById('repLoc').value = '';
+                imgInput.value = '';
+                
+                renderDashboard();
+                alert("Report successfully added!");
+            };
+
+            if (imgInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => saveAction(e.target.result);
+                reader.readAsDataURL(imgInput.files[0]);
+            } else {
+                saveAction();
+            }
+        }
+
+        function deleteReport(id) {
+            dbReports = dbReports.filter(r => r.id !== id);
+            localStorage.setItem('sec_reports', JSON.stringify(dbReports));
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('listContainer');
+            
+            // Update Stats
+            document.getElementById('totalCount').innerText = dbReports.length;
+            document.getElementById('lostCount').innerText = dbReports.filter(r => r.type === 'Lost').length;
+            document.getElementById('foundCount').innerText = dbReports.filter(r => r.type === 'Found').length;
+
+            if(dbReports.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8;">No reports recorded yet.</p>';
+                return;
+            }
+
+            container.innerHTML = dbReports.map(r => `
+                <div class="item-card">
+                    <div class="item-meta">
+                        <img src="${r.image || 'https://via.placeholder.com/70?text=No+Photo'}" class="item-thumbnail">
+                        <div>
+                            <strong style="color:var(--dark)">${r.name}</strong><br>
+                            <small style="color:#64748b">${r.loc} • ${r.date}</small>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="status-badge ${r.type === 'Lost' ? 'bg-lost' : 'bg-found'}">${r.type.toUpperCase()}</span><br>
+                        <button class="btn-delete" onclick="deleteReport(${r.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('sec_user');
+            changePage('pageWelcome');
+        }
+
+        // Keep user logged in on refresh
+        window.onload = () => {
+            const user = localStorage.getItem('sec_user');
+            if(user) {
+                document.getElementById('welcomeUser').innerText = "Hi, " + user + "!";
+                changePage('pageDashboard');
+            }
+        };
+    </script>
+</body>
+</html>
